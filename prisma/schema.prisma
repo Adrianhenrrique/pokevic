@@ -1,0 +1,201 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // hashed password
+  role      UserRole @default(PLAYER)
+  
+  profile   Profile?
+  teams     Team[]
+  tournaments TournamentParticipant[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  ORGANIZER
+  PLAYER
+}
+
+model Profile {
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  displayName  String
+  inGameName   String? // Nickname do jogo
+  discordId    String? @unique
+  minecraftUuid String? @unique
+  avatarUrl    String?
+  bio          String? @db.Text
+  elo          Int     @default(1000)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPublic    Boolean  @default(false)
+  
+  pokemons    TeamPokemon[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("teams")
+}
+
+model Pokemon {
+  id          String   @id @default(uuid())
+  pokedexId   Int      @unique
+  name        String
+  baseStats   Json?    // Opcional: stats base (HP, Atk, Def, SpA, SpD, Spe)
+  types       Json     // Lista JSON de strings
+  isBanned    Boolean  @default(false)
+  
+  teamPokemons TeamPokemon[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@map("pokemons")
+}
+
+model TeamPokemon {
+  id          String   @id @default(uuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  pokemonId   String
+  pokemon     Pokemon  @relation(fields: [pokemonId], references: [id])
+  
+  nickname    String?
+  level       Int      @default(100)
+  nature      String?
+  ability     String?
+  moves       Json?    // Lista JSON de golpes
+  ivs         Json?    // Individul Values: { hp: 31, atk: 31... }
+  evs         Json?    // Effort Values
+  
+  itemId      String?
+  item        Item?    @relation(fields: [itemId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([teamId])
+  @@map("team_pokemons")
+}
+
+model Item {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  
+  teamPokemons TeamPokemon[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("items")
+}
+
+model Tournament {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      TournamentStatus @default(DRAFT)
+  format      String   // E.g., 'SINGLE_ELIMINATION', 'SWISS'
+  
+  startDate   DateTime
+  endDate     DateTime?
+  
+  participants TournamentParticipant[]
+  battles      Battle[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tournaments")
+}
+
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// Entidade associativa para a relação NxN entre User e Tournament
+model TournamentParticipant {
+  id            String   @id @default(uuid())
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // O id do time amarrado ao torneio (Para congelar os IVs e EVs que ele usará)
+  activeTeamId  String?  
+
+  createdAt     DateTime @default(now())
+  
+  @@unique([tournamentId, userId]) // Um player se inscreve apenas uma vez por torneio
+  @@index([userId])
+  @@index([tournamentId])
+  @@map("tournament_participants")
+}
+
+model Battle {
+  id            String   @id @default(uuid())
+  tournamentId  String?
+  tournament    Tournament? @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  
+  player1Id     String
+  player2Id     String
+  
+  winnerId      String?
+  scoreP1       Int?
+  scoreP2       Int?
+
+  status        BattleStatus @default(PENDING)
+  roundInfo     String?  // Ex: "Round 1", "Semi-Finals"
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tournamentId])
+  @@index([player1Id])
+  @@index([player2Id])
+  @@map("battles")
+}
+
+enum BattleStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
