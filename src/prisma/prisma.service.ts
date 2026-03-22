@@ -11,7 +11,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     }
 
     super({
-      datasourceUrl: process.env.DATABASE_URL,
       errorFormat: 'pretty',
     });
   }
