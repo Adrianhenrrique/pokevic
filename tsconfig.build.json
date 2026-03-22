@@ -1,4 +1,38 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts",
+    "prisma.config.ts",
+    "scripts"
+  ]
 }
+// [Nest] 88979  - 03/22/2026, 5:58:51 AM     LOG [NestFactory] Starting Nest application...
+// [Nest] 88979  - 03/22/2026, 5:58:51 AM   ERROR [ExceptionHandler] PrismaClientInitializationError: `PrismaClient` needs to be constructed with a non-empty, valid `PrismaClientOptions`:
+// ```
+// new PrismaClient({
+//   ...
+// })
+// ```
+// or
+// ```
+// constructor() {
+//   super({ ... });
+// }
+// ```
+//     at new t (/var/vitrex/backpoke/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:320:15)
+//     at new PrismaService (/var/vitrex/backpoke/src/prisma/prisma.service.ts:13:5)
+//     at Injector.instantiateClass (/var/vitrex/backpoke/node_modules/@nestjs/core/injector/injector.js:422:19)
+//     at callback (/var/vitrex/backpoke/node_modules/@nestjs/core/injector/injector.js:70:45)
+//     at processTicksAndRejections (node:internal/process/task_queues:104:5)
+//     at Injector.resolveConstructorParams (/var/vitrex/backpoke/node_modules/@nestjs/core/injector/injector.js:170:24)
+//     at Injector.loadInstance (/var/vitrex/backpoke/node_modules/@nestjs/core/injector/injector.js:75:13)
+//     at Injector.loadProvider (/var/vitrex/backpoke/node_modules/@nestjs/core/injector/injector.js:103:9)
+//     at /var/vitrex/backpoke/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+//     at async Promise.all (index 3) {
+//   clientVersion: '7.5.0',
+//   errorCode: undefined,
+//   retryable: undefined
+// }
